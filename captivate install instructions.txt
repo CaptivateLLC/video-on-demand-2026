@@ -1,0 +1,22 @@
+update cdk:
+sudo npm install -g aws-cdk@latest
+
+
+to create a new deployment:
+
+./build-s3-dist.sh cap-deployment-staging us-east-1 v1.0.0
+
+create regional deploy bucket
+aws s3 mb s3://cap-deployment-staging-us-east-1 --region us-east-1
+
+upload to bucket
+
+global
+aws s3 cp global-s3-assets/ s3://cap-deployment-staging/video-on-demand-on-aws/v1.0.0/ --recursive --acl bucket-owner-full-control
+
+regional
+aws s3 cp regional-s3-assets/ s3://cap-deployment-staging-us-east-1/video-on-demand-on-aws/v1.0.0/ --recursive --acl bucket-owner-full-control
+
+deploy with cdk
+cd source/cdk
+npx cdk deploy
