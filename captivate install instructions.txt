@@ -27,4 +27,8 @@ aws s3 cp regional-s3-assets/ s3://cap-deployment-staging-us-east-1/video-on-dem
 
 deploy with cdk
 cd source/cdk
-npx cdk deploy
+npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
+
+ /aws/lambda/video-on-demand-2026-custom-resource
+
+  video-on-demand-2026-EncodeComplete 
