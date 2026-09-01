@@ -4,10 +4,18 @@ sudo npm install -g aws-cdk@latest
 
 to create a new deployment:
 
-./build-s3-dist.sh cap-deployment-staging us-east-1 v1.0.0
+mac VS Code terminal:
+  ./build-s3-dist.sh cap-deployment-staging us-east-1 v1.0.0
+windows VS Code terminal
+  bash build-s3-dist.sh cap-deployment-staging video-on-demand-on-aws v1.0.0
+
 
 create regional deploy bucket
 aws s3 mb s3://cap-deployment-staging-us-east-1 --region us-east-1
+
+check status of an update
+aws cloudformation describe-stacks   --stack-name video-on-demand-2026   --query "Stacks[0].StackStatus"   --region us-east-1
+
 
 upload to bucket
 

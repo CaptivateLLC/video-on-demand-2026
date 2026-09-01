@@ -5,6 +5,7 @@
 **/open-source
 **/.zip
 /build
+/deployment/staging/
 
 # python output
 **/__pycache__
