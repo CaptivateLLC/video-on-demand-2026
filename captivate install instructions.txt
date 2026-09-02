@@ -13,7 +13,7 @@ find . -name "package.json" \
       (cd "$dir" && npm install)
   done
 
-  
+
 
 to create a new deployment:
 
@@ -38,10 +38,12 @@ aws s3 cp global-s3-assets/ s3://cap-deployment-staging/video-on-demand-on-aws/v
 regional
 aws s3 cp regional-s3-assets/ s3://cap-deployment-staging-us-east-1/video-on-demand-on-aws/v1.0.0/ --recursive --acl bucket-owner-full-control
 
-deploy with cdk
+deploy with cdk and include branch
 cd source/cdk
-npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
+BRANCH=main npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
 
- /aws/lambda/video-on-demand-2026-custom-resource
 
-  video-on-demand-2026-EncodeComplete 
+update lambda:
+  change encode's index.js locally.
+  run BRANCH=staging npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
+

@@ -12,6 +12,8 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
+declare const process: NodeJS.Process;
+
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { DefaultStackSynthesizer } from 'aws-cdk-lib';
@@ -19,15 +21,15 @@ import { VideoOnDemand } from '../lib/vod-stack';
 import { AwsSolutionsChecks } from 'cdk-nag';
 
 const app = new cdk.App();
-new VideoOnDemand(app, 'VideoOnDemand2026', { // NOSONAR
-   env: {
-  account: '909442478174',
-  region: 'us-east-1',
-},
-
-    synthesizer: new DefaultStackSynthesizer({
-      generateBootstrapVersionRule: false
-    })
+new VideoOnDemand(app, 'video-on-demand-2030', { // NOSONAR
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+  },
+  branch: process.env.BRANCH ?? 'staging',
+  synthesizer: new DefaultStackSynthesizer({
+    generateBootstrapVersionRule: false
+  })
 }); // NOSONAR
 
 //cdk nag

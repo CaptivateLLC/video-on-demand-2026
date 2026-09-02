@@ -29,9 +29,16 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { NagSuppressions } from 'cdk-nag';
 
+
+export interface VideoOnDemandProps extends cdk.StackProps {
+  branch: string;
+}
+
 export class VideoOnDemand extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+   constructor(scope: Construct, id: string, props: VideoOnDemandProps) {
     super(scope, id, props);
+
+    const branch = props.branch;
 
     /**
      * CloudFormation Template Descrption
@@ -181,6 +188,7 @@ export class VideoOnDemand extends cdk.Stack {
      * Logging bucket for S3 and CloudFront
      */
     const logsBucket = new s3.Bucket(this, 'Logs', {
+      bucketName: `${this.stackName}-logs-${branch}`,
       objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
       blockPublicAccess: new s3.BlockPublicAccess({
         blockPublicAcls: true,
@@ -228,6 +236,7 @@ export class VideoOnDemand extends cdk.Stack {
      * Source bucket for source video and jobsettings JSON files
      */
     const source = new s3.Bucket(this, 'Source', {
+      bucketName: `${this.stackName}-source-${branch}`,
       serverAccessLogsBucket: logsBucket,
       serverAccessLogsPrefix: 'source-bucket-logs/',
       blockPublicAccess: new s3.BlockPublicAccess({
@@ -295,6 +304,7 @@ export class VideoOnDemand extends cdk.Stack {
      * Destination bucket for workflow outputs
      */
     const destination = new s3.Bucket(this, 'Destination', {
+      bucketName: `${this.stackName}-destination-${branch}`,
       serverAccessLogsBucket: logsBucket,
       serverAccessLogsPrefix: 'destination-bucket-logs/',
       blockPublicAccess: new s3.BlockPublicAccess({
@@ -518,7 +528,7 @@ export class VideoOnDemand extends cdk.Stack {
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`
       },
-      functionName: `${cdk.Aws.STACK_NAME}-custom-resource`,
+      functionName: `${cdk.Aws.STACK_NAME}-custom-resource-${branch}`,
       role: customResourceRole,
       code: lambda.Code.fromAsset('../custom-resource'),
       timeout: cdk.Duration.seconds(30)
@@ -841,7 +851,7 @@ export class VideoOnDemand extends cdk.Stack {
     const errorHandlerLambda = new lambda.Function(this, 'ErrorHandlerLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-error-handler`,
+      functionName: `${cdk.Aws.STACK_NAME}-error-handler-${branch}`,
       description: 'Captures and processes workflow errors',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -951,7 +961,7 @@ export class VideoOnDemand extends cdk.Stack {
     const inputValidateLambda = new lambda.Function(this, 'InputValidateLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-input-validate`,
+      functionName: `${cdk.Aws.STACK_NAME}-input-validate-${branch}`,
       description: 'Validates the input given to the workflow',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1065,7 +1075,7 @@ export class VideoOnDemand extends cdk.Stack {
     const mediaInfoLambda = new lambda.Function(this, 'MediaInfoLambda', {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
-      functionName: `${cdk.Aws.STACK_NAME}-mediainfo`,
+      functionName: `${cdk.Aws.STACK_NAME}-mediainfo-${branch}`,
       description: 'Runs mediainfo on a pre-signed S3 URL',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1152,7 +1162,7 @@ export class VideoOnDemand extends cdk.Stack {
     const dynamoUpdateLambda = new lambda.Function(this, 'DynamoUpdateLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-dynamo`,
+      functionName: `${cdk.Aws.STACK_NAME}-dynamo-${branch}`,
       description: 'Updates DynamoDB with event data',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1241,7 +1251,7 @@ export class VideoOnDemand extends cdk.Stack {
     const profilerLambda = new lambda.Function(this, 'ProfilerLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-profiler`,
+      functionName: `${cdk.Aws.STACK_NAME}-profiler-${branch}`,
       description: 'Sets an EncodeProfile based on mediainfo output',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1339,7 +1349,7 @@ export class VideoOnDemand extends cdk.Stack {
     const encodeLambda = new lambda.Function(this, 'EncodeLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-encode`,
+      functionName: `${cdk.Aws.STACK_NAME}-encode-${branch}`,
       description: 'Creates a MediaConvert encode job',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1433,7 +1443,7 @@ export class VideoOnDemand extends cdk.Stack {
     const outputValidateLambda = new lambda.Function(this, 'OutputValidateLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-output-validate`,
+      functionName: `${cdk.Aws.STACK_NAME}-output-validate-${branch}`,
       description: 'Parses MediaConvert job output',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1523,7 +1533,7 @@ export class VideoOnDemand extends cdk.Stack {
     const archiveSourceLambda = new lambda.Function(this, 'ArchiveSourceLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-archive-source`,
+      functionName: `${cdk.Aws.STACK_NAME}-archive-source-${branch}`,
       description: 'Updates tags on source files to enable Glacier',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1616,7 +1626,7 @@ export class VideoOnDemand extends cdk.Stack {
     const sqsSendMessageLambda = new lambda.Function(this, 'SqsSendMessageLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-sqs-publish`,
+      functionName: `${cdk.Aws.STACK_NAME}-sqs-publish-${branch}`,
       description: 'Publish the workflow results to an SQS queue',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1710,7 +1720,7 @@ export class VideoOnDemand extends cdk.Stack {
     const snsNotificationLambda = new lambda.Function(this, 'SnsNotificationLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-sns-notification`,
+      functionName: `${cdk.Aws.STACK_NAME}-sns-notification-${branch}`,
       description: 'Sends a notification when the encode job is completed',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1818,7 +1828,7 @@ export class VideoOnDemand extends cdk.Stack {
     const mediaPackageAssetsLambda = new lambda.Function(this, 'MediaPackageAssetsLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-media-package-assets`,
+      functionName: `${cdk.Aws.STACK_NAME}-media-package-assets-${branch}`,
       description: 'Ingests an asset into MediaPackage-VOD',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
@@ -1914,7 +1924,7 @@ export class VideoOnDemand extends cdk.Stack {
     const stepFunctionsLambda = new lambda.Function(this, 'StepFunctionsLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      functionName: `${cdk.Aws.STACK_NAME}-step-functions`,
+      functionName: `${cdk.Aws.STACK_NAME}-step-functions-${branch}`,
       description: 'Creates a unique identifer (GUID) and executes the Ingest StateMachine',
       environment: {
         SOLUTION_IDENTIFIER: `AwsSolution/${solutionId}/%%VERSION%%`,
