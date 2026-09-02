@@ -35,7 +35,7 @@ export interface VideoOnDemandProps extends cdk.StackProps {
 }
 
 export class VideoOnDemand extends cdk.Stack {
-   constructor(scope: Construct, id: string, props: VideoOnDemandProps) {
+  constructor(scope: Construct, id: string, props: VideoOnDemandProps) {
     super(scope, id, props);
 
     const branch = props.branch;
@@ -520,6 +520,25 @@ export class VideoOnDemand extends cdk.Stack {
         }
       ]
     );
+
+    const jpgSanitizeLambda = new lambda.Function(this, 'JpgSanitizeFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'index.handler',
+      functionName: `${cdk.Aws.STACK_NAME}-jpg-sanitize-${branch}`,
+      code: lambda.Code.fromAsset('../jpg-sanitizer'),
+      timeout: cdk.Duration.seconds(30)
+    });
+    NagSuppressions.addResourceSuppressions(jpgSanitizeLambda, [
+      {
+        id: 'AwsSolutions-L1',
+        reason: 'Already using NODEJS_22_X which is the latest runtime',
+      },
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'AWSLambdaBasicExecutionRole is acceptable for this function',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
+      },
+    ], true);
 
     const customResourceLambda = new lambda.Function(this, 'CustomResource', {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -2071,6 +2090,10 @@ export class VideoOnDemand extends cdk.Stack {
     /**
      * StepFunction States
      */
+    const jpgSanitizeTask = new tasks.LambdaInvoke(this, 'JPG Sanitize', {
+      lambdaFunction: jpgSanitizeLambda,
+      payloadResponseOnly: true
+    });
     const inputValidateTask = new tasks.LambdaInvoke(this, 'Input Validate', {
       lambdaFunction: inputValidateLambda,
       payloadResponseOnly: true
@@ -2144,6 +2167,7 @@ export class VideoOnDemand extends cdk.Stack {
      */
     snsNotificationTaskIngest.next(processExecuteTask);
     const ingestWorkflowDefinition = inputValidateTask
+      .next(jpgSanitizeTask)
       .next(mediaInfoTask)
       .next(dynamodbUpdateTaskIngest)
       .next(new sfn.Choice(this, 'SNS Choice (Ingest)')
