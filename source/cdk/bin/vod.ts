@@ -19,7 +19,12 @@ import { VideoOnDemand } from '../lib/vod-stack';
 import { AwsSolutionsChecks } from 'cdk-nag';
 
 const app = new cdk.App();
-new VideoOnDemand(app, 'video-on-demand-2029', { // NOSONAR
+new VideoOnDemand(app, 'VideoOnDemand2026', { // NOSONAR
+   env: {
+  account: '909442478174',
+  region: 'us-east-1',
+},
+
     synthesizer: new DefaultStackSynthesizer({
       generateBootstrapVersionRule: false
     })

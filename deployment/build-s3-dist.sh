@@ -92,7 +92,7 @@ rm tree.json manifest.json cdk.out
 echo "------------------------------------------------------------------------------"
 echo "Run Cdk Helper and update template placeholders"
 echo "------------------------------------------------------------------------------"
-mv video-on-demand-2029.template.json "$template_dist_dir/$solution_name.template"
+mv VideoOnDemand2026.template.json "$template_dist_dir/$solution_name.template"
 
 node "$template_dir/cdk-solution-helper/index"
 

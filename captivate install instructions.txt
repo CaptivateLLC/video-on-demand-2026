@@ -2,6 +2,19 @@ update cdk:
 sudo npm install -g aws-cdk@latest
 
 
+run npm install for all lambdas
+find . -name "package.json" \
+  -not -path "*/node_modules/*" \
+  -not -path "./package.json" \
+  -not -path "./cdk.json" \
+  | while read f; do
+      dir=$(dirname "$f")
+      echo "Installing in $dir..."
+      (cd "$dir" && npm install)
+  done
+
+  
+
 to create a new deployment:
 
 mac VS Code terminal:

@@ -525,6 +525,11 @@ export class VideoOnDemand extends cdk.Stack {
     });
     customResourceLambda.node.addDependency(customResourceRole);
     customResourceLambda.node.addDependency(customResourcePolicy);
+    customResourceLambda.addPermission('AllowCloudFormationInvoke', {
+      principal: new iam.ServicePrincipal('cloudformation.amazonaws.com'),
+      action: 'lambda:InvokeFunction',
+    });
+
 
     //cfn_nag
     const cfnCustomResourceLambda = customResourceLambda.node.findChild('Resource') as lambda.CfnFunction;
