@@ -5,6 +5,7 @@ import { fileTypeFromBuffer } from "file-type";
 
 export const handler = async (event) => {
   console.log("Received event:", JSON.stringify(event, null, 2));
+  const aaa = 123412341234;
 
   const sourceBucket = event.srcBucket;
   const sourceKey = event.srcVideo;

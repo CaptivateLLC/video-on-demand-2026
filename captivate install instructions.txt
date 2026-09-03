@@ -23,6 +23,10 @@ windows VS Code terminal
   bash build-s3-dist.sh cap-deployment-staging video-on-demand-on-aws v1.0.0
 
 
+
+  set CDK_DEFAULT_ACCOUNT=909442478174 && set CDK_DEFAULT_REGION=us-east-1 && npx cdk synth 2>&1
+
+
 create regional deploy bucket
 aws s3 mb s3://cap-deployment-staging-us-east-1 --region us-east-1
 
@@ -40,10 +44,14 @@ aws s3 cp regional-s3-assets/ s3://cap-deployment-staging-us-east-1/video-on-dem
 
 deploy with cdk and include branch
 cd source/cdk
-BRANCH=main npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
+BRANCH=staging npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
 
 
 update lambda:
   change encode's index.js locally.
   run BRANCH=staging npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
 
+
+
+as of 9/3, use this to deploy
+BRANCH=staging CDK_DEFAULT_ACCOUNT=909442478174 CDK_DEFAULT_REGION=us-east-1 ./node_modules/.bin/cdk deploy --parameters AdminEmail=kmcgurn@captivate.com --verbose 2>&1
