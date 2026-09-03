@@ -51,7 +51,10 @@ update lambda:
   change encode's index.js locally.
   run BRANCH=staging npx cdk deploy --parameters AdminEmail=kmcgurn@captivate.com
 
-
+when bin ts and js files get out of sync, run:
+npx tsc
+then deploy
 
 as of 9/3, use this to deploy
-BRANCH=staging CDK_DEFAULT_ACCOUNT=909442478174 CDK_DEFAULT_REGION=us-east-1 ./node_modules/.bin/cdk deploy --parameters AdminEmail=kmcgurn@captivate.com --verbose 2>&1
+npx tsc (rebuilds template with changes)
+./node_modules/.bin/cdk deploy

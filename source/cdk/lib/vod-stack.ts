@@ -1,15 +1,3 @@
-/*********************************************************************************************************************
- *  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
- *                                                                                                                    *
- *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
- *  with the License. A copy of the License is located at                                                             *
- *                                                                                                                    *
- *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
- *                                                                                                                    *
- *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
- *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
- *  and limitations under the License.                                                                                *
- *********************************************************************************************************************/
 
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -28,6 +16,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { NagSuppressions } from 'cdk-nag';
+import { CfnParameter } from 'aws-cdk-lib/aws-ssm';
 
 
 export interface VideoOnDemandProps extends cdk.StackProps {
@@ -51,9 +40,11 @@ export class VideoOnDemand extends cdk.Stack {
      */
     const adminEmail = new cdk.CfnParameter(this, 'AdminEmail', {
       type: 'String',
-      description: 'Email address for SNS notifications (subscribed users will receive ingest, publishing, and error notifications)',
-      allowedPattern: '^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$'
+      default: 'kmcgurn@captivate.com',
+      description: 'Admin email address'
     });
+
+
     const workflowTrigger = new cdk.CfnParameter(this, 'WorkflowTrigger', {
       type: 'String',
       description: 'How the workflow will be triggered (source video upload to S3 or source metadata file upload)',
@@ -529,6 +520,24 @@ export class VideoOnDemand extends cdk.Stack {
       timeout: cdk.Duration.seconds(30)
     });
     NagSuppressions.addResourceSuppressions(jpgSanitizeLambda, [
+      {
+        id: 'AwsSolutions-L1',
+        reason: 'Already using NODEJS_22_X which is the latest runtime',
+      },
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'AWSLambdaBasicExecutionRole is acceptable for this function',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
+      },
+    ], true);
+    const pngProcessLambda = new lambda.Function(this, 'PngProcessFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'index.handler',
+      functionName: `${cdk.Aws.STACK_NAME}-png-process-${branch}`,
+      code: lambda.Code.fromAsset('../png-processor'),
+      timeout: cdk.Duration.seconds(30)
+    });
+    NagSuppressions.addResourceSuppressions(pngProcessLambda, [
       {
         id: 'AwsSolutions-L1',
         reason: 'Already using NODEJS_22_X which is the latest runtime',
@@ -2094,6 +2103,10 @@ export class VideoOnDemand extends cdk.Stack {
       lambdaFunction: jpgSanitizeLambda,
       payloadResponseOnly: true
     });
+    const pngProcessTask = new tasks.LambdaInvoke(this, 'PNG Process', {
+      lambdaFunction: pngProcessLambda,
+      payloadResponseOnly: true
+    });
     const inputValidateTask = new tasks.LambdaInvoke(this, 'Input Validate', {
       lambdaFunction: inputValidateLambda,
       payloadResponseOnly: true
@@ -2168,6 +2181,7 @@ export class VideoOnDemand extends cdk.Stack {
     snsNotificationTaskIngest.next(processExecuteTask);
     const ingestWorkflowDefinition = inputValidateTask
       .next(jpgSanitizeTask)
+      .next(pngProcessTask)
       .next(mediaInfoTask)
       .next(dynamodbUpdateTaskIngest)
       .next(new sfn.Choice(this, 'SNS Choice (Ingest)')
