@@ -55,6 +55,12 @@ when bin ts and js files get out of sync, run:
 npx tsc
 then deploy
 
-as of 9/3, use this to deploy
-npx tsc (rebuilds template with changes)
-./node_modules/.bin/cdk deploy
+
+
+must be in cdk folder to run npx cdk diff or deploy
+
+deploy: npx cdk deploy
+test: npx cdk diff
+
+after pull on new computer, do npm install for each lambda
+  find . -name "package.json" -not -path "*/node_modules/*" -execdir npm install \;
